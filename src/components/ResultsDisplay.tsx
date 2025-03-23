@@ -9,11 +9,113 @@ const ResultsDisplay = () => {
   
   // 添加 useEffect 从本地存储加载文档
   useEffect(() => {
-    const storedDocs = localStorage.getItem('documents');
-    if (storedDocs) {
-      setDocuments(JSON.parse(storedDocs));
-    }
+    const loadDocumentsFromStorage = () => {
+      const storedDocs = localStorage.getItem('documents');
+      if (storedDocs) {
+        setDocuments(JSON.parse(storedDocs));
+      }
+    };
+    
+    // 初始加载
+    loadDocumentsFromStorage();
+    
+    // 添加存储事件监听器，当其他组件更新localStorage时刷新
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'documents') {
+        loadDocumentsFromStorage();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
+  
+  // 添加查看详情处理函数
+  const handleViewDetails = (doc: typeof documents[0]) => {
+    // 如果有原始文件路径，尝试打开文件
+    if (doc.filePath) {
+      try {
+        // 获取当前网站的基础URL
+        const baseUrl = window.location.origin;
+        // 拼接完整的文件URL路径
+        const fullPath = `${baseUrl}${doc.filePath}`;
+        
+        console.log("尝试打开文件:", fullPath);
+        
+        // 创建一个链接元素来模拟文件下载或打开
+        const link = document.createElement('a');
+        link.href = fullPath;
+        
+        // 对于可在浏览器中预览的文件类型，设置为在新窗口打开
+        if (doc.type === 'pdf' || doc.type === 'image') {
+          link.target = '_blank';
+        } else {
+          // 否则设置为下载
+          link.setAttribute('download', doc.title);
+        }
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("打开文件时出错:", error);
+        alert(`打开文件时出错: ${error.message || '未知错误'}`);
+      }
+    } else {
+      // 如果没有文件路径，显示提示
+      alert('抱歉，无法找到原始文件路径');
+    }
+  };
+  
+  // 添加删除文档处理函数
+  const handleDeleteDocument = (docId: string) => {
+    try {
+      // 找到要删除的文档
+      const docToDelete = documents.find(doc => doc.id === docId);
+      
+      // 过滤掉要删除的文档
+      const updatedDocuments = documents.filter(doc => doc.id !== docId);
+      
+      // 更新状态
+      setDocuments(updatedDocuments);
+      
+      // 更新本地存储
+      localStorage.setItem('documents', JSON.stringify(updatedDocuments));
+      
+      // 如果找到了要删除的文档，并且它有标签，则更新标签存储
+      if (docToDelete && docToDelete.tags && docToDelete.tags.length > 0) {
+        const tagIds = docToDelete.tags.map(tag => tag.id);
+        
+        // 获取当前所有标签
+        const storedTagsJSON = localStorage.getItem('documentTags') || '[]';
+        const storedTags = JSON.parse(storedTagsJSON);
+        
+        // 检查哪些标签只在此文档中使用
+        // 首先收集所有其他文档中使用的标签ID
+        const tagsInOtherDocs = new Set<string>();
+        updatedDocuments.forEach(doc => {
+          doc.tags.forEach(tag => {
+            tagsInOtherDocs.add(tag.id);
+          });
+        });
+        
+        // 过滤掉仅在已删除文档中使用的标签
+        const updatedTags = storedTags.filter((tag: any) => tagsInOtherDocs.has(tag.id));
+        
+        // 更新标签存储
+        localStorage.setItem('documentTags', JSON.stringify(updatedTags));
+      }
+      
+      console.log(`文档 ${docId} 已删除`);
+    } catch (error) {
+      console.error("删除文档时出错:", error);
+      alert(`删除文档时出错: ${error.message || '未知错误'}`);
+    }
+  };
   
   const filteredDocuments = searchQuery
     ? documents.filter(doc => 
@@ -142,7 +244,24 @@ const ResultsDisplay = () => {
                       
                       <div className="flex justify-between items-center text-xs text-muted-foreground">
                         <span>上传时间: {new Date(doc.uploadedAt).toLocaleString('zh-CN')}</span>
-                        <button className="text-primary hover:underline">查看详情</button>
+                        <div className="flex gap-3">
+                          <button 
+                            className="text-primary hover:underline"
+                            onClick={() => handleViewDetails(doc)}
+                          >
+                            查看详情
+                          </button>
+                          <button 
+                            className="text-red-500 hover:underline"
+                            onClick={() => {
+                              if (window.confirm(`确定要删除文档 "${doc.title}" 吗？`)) {
+                                handleDeleteDocument(doc.id);
+                              }
+                            }}
+                          >
+                            删除
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

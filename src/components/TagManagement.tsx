@@ -21,7 +21,26 @@ const TagManagement = () => {
     : tags;
   
   const handleTagDelete = (tagId: string) => {
-    setTags(tags.filter(tag => tag.id !== tagId));
+    const updatedTags = tags.filter(tag => tag.id !== tagId);
+    
+    setTags(updatedTags);
+    
+    localStorage.setItem('documentTags', JSON.stringify(updatedTags));
+    
+    const storedDocs = localStorage.getItem('documents');
+    if (storedDocs) {
+      try {
+        const docs = JSON.parse(storedDocs);
+        const updatedDocs = docs.map((doc: any) => ({
+          ...doc,
+          tags: doc.tags.filter((tag: any) => tag.id !== tagId)
+        }));
+        
+        localStorage.setItem('documents', JSON.stringify(updatedDocs));
+      } catch (error) {
+        console.error("更新文档标签时出错:", error);
+      }
+    }
   };
   
   const handleEditStart = (tag: typeof mockTags[0]) => {
@@ -50,13 +69,56 @@ const TagManagement = () => {
   };
   
   useEffect(() => {
+    const loadTagsFromStorage = () => {
+      const storedTags = localStorage.getItem('documentTags');
+      if (storedTags) {
+        setTags(JSON.parse(storedTags));
+      } else {
+        setTags(mockTags);
+      }
+    };
+    
+    // 初始加载
+    loadTagsFromStorage();
+    
+    // 添加存储事件监听器，当其他组件更新localStorage时刷新
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'documentTags') {
+        console.log('TagManagement检测到标签变化，正在刷新数据');
+        loadTagsFromStorage();
+      }
+    };
+    
+    // 监听自定义事件
+    const handleCustomEvent = () => {
+      console.log('TagManagement检测到自定义事件，正在刷新数据');
+      loadTagsFromStorage();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('tagsUpdated', handleCustomEvent);
+    
+    // 定期刷新标签数据，确保数据最新
+    const interval = setInterval(() => {
+      loadTagsFromStorage();
+    }, 5000);
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('tagsUpdated', handleCustomEvent);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // 添加手动刷新方法
+  const refreshTags = () => {
     const storedTags = localStorage.getItem('documentTags');
     if (storedTags) {
       setTags(JSON.parse(storedTags));
-    } else {
-      setTags(mockTags);
+      console.log('标签数据已手动刷新');
     }
-  }, []);
+  };
   
   return (
     <section id="tags" className="py-24 relative bg-secondary/30">
@@ -73,6 +135,12 @@ const TagManagement = () => {
             <p className="text-muted-foreground">
               系统自动生成智能标签，可以进行编辑、删除和分类
             </p>
+            <button 
+              className="mt-4 px-3 py-1 text-sm bg-secondary rounded-full hover:bg-secondary/80 transition-colors"
+              onClick={refreshTags}
+            >
+              刷新标签
+            </button>
           </motion.div>
           
           <motion.div

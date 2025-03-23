@@ -135,29 +135,72 @@ const FileUpload = () => {
     const newTags = tags.map(tag => ({
       id: `tag-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: tag,
+      confidence: 0.85, // 添加置信度
       category: 'keyword', // 可以设置默认分类
-      count: 1
     }));
     
-    // 合并标签并去重
-    const updatedTags = [...existingTags, ...newTags];
+    // 合并标签并去重（根据名称去重）
+    // 如果名称重复，保留已有的标签
+    const uniqueTagNames = new Set();
+    // 先添加现有标签
+    const updatedTags = [...existingTags];
+    // 标记已存在的标签名
+    existingTags.forEach(tag => uniqueTagNames.add(tag.name.toLowerCase()));
+    // 只添加不重复的新标签
+    newTags.forEach(tag => {
+      if (!uniqueTagNames.has(tag.name.toLowerCase())) {
+        uniqueTagNames.add(tag.name.toLowerCase());
+        updatedTags.push(tag);
+      }
+    });
     
     // 保存回本地存储
     localStorage.setItem('documentTags', JSON.stringify(updatedTags));
     
-    // 也可以保存到当前处理的文档
+    // 创建并保存文档数据
     const documentData = {
       id: `doc-${Date.now()}`,
       title: selectedFile?.name || '未命名文档',
+      type: 'text',
+      uploadedAt: new Date().toISOString(),
+      status: 'processed',
+      summary: '文本文档内容摘要', // 可以改为从内容中提取摘要
       tags: newTags,
-      date: new Date().toISOString(),
-      status: 'processed'
+      filePath: `/uploads/${selectedFile?.name}` // 假设文件路径
     };
     
     // 保存文档
     const existingDocsJSON = localStorage.getItem('documents') || '[]';
     const existingDocs = JSON.parse(existingDocsJSON);
     localStorage.setItem('documents', JSON.stringify([...existingDocs, documentData]));
+    
+    // 手动触发storage事件，使其他组件能够响应更改
+    // 因为同一窗口内localStorage的更改不会触发storage事件
+    try {
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'documentTags',
+        newValue: JSON.stringify(updatedTags),
+        storageArea: localStorage
+      }));
+      
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'documents',
+        newValue: JSON.stringify([...existingDocs, documentData]),
+        storageArea: localStorage
+      }));
+      
+      // 触发自定义事件，明确通知标签管理组件刷新数据
+      window.dispatchEvent(new CustomEvent('tagsUpdated'));
+      
+      console.log('已触发storage事件以同步标签和文档数据');
+    } catch (error) {
+      console.error('触发storage事件失败:', error);
+    }
+    
+    // 尝试直接滚动到标签管理组件以引起注意
+    setTimeout(() => {
+      document.getElementById('tags')?.scrollIntoView({behavior: 'smooth'});
+    }, 500);
   };
   
   return (

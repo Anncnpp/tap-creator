@@ -14,11 +14,39 @@ export interface ProcessedDocument {
   summary: string;
   tags: Tag[];
   thumbnail?: string;
+  filePath?: string;
 }
 
 export const mockTags: Tag[] = [];
 
-export const mockDocuments: ProcessedDocument[] = [];
+export const mockDocuments: ProcessedDocument[] = [
+  {
+    id: "1",
+    title: "新建 文本文档.txt",
+    type: "text",
+    uploadedAt: "2023-12-01T12:00:00Z",
+    status: "processed",
+    summary: "这是一个示例文本文档，用于测试查看详情功能",
+    tags: [
+      { id: "t1", name: "文本", confidence: 0.95, category: "keyword" },
+      { id: "t2", name: "示例", confidence: 0.88, category: "theme" }
+    ],
+    filePath: "/test.txt" // 修改为public目录下的文件路径
+  },
+  {
+    id: "2",
+    title: "示例PDF文档",
+    type: "pdf",
+    uploadedAt: "2023-12-02T15:30:00Z",
+    status: "processed", 
+    summary: "这是一个PDF文档示例，包含产品说明和使用指南",
+    tags: [
+      { id: "t3", name: "PDF", confidence: 0.92, category: "keyword" },
+      { id: "t4", name: "指南", confidence: 0.85, category: "theme" }
+    ]
+    // 此文档没有filePath，将触发警告提示
+  }
+];
 
 export const processingSteps = [
   {
