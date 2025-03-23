@@ -71,6 +71,9 @@ const FileUpload = () => {
         // 根据文件内容生成标签
         const tags = generateTagsFromContent(fileContent);
         setGeneratedTags(tags);
+        
+        // 将生成的标签保存到本地存储或全局状态
+        saveTagsToGlobalState(tags);
       }
       
       // 处理完成，更新状态
@@ -120,6 +123,41 @@ const FileUpload = () => {
     }
     
     return tags;
+  };
+  
+  // 保存标签到全局状态的函数
+  const saveTagsToGlobalState = (tags: string[]) => {
+    // 获取现有标签
+    const existingTagsJSON = localStorage.getItem('documentTags') || '[]';
+    const existingTags = JSON.parse(existingTagsJSON);
+    
+    // 创建新标签对象
+    const newTags = tags.map(tag => ({
+      id: `tag-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: tag,
+      category: 'keyword', // 可以设置默认分类
+      count: 1
+    }));
+    
+    // 合并标签并去重
+    const updatedTags = [...existingTags, ...newTags];
+    
+    // 保存回本地存储
+    localStorage.setItem('documentTags', JSON.stringify(updatedTags));
+    
+    // 也可以保存到当前处理的文档
+    const documentData = {
+      id: `doc-${Date.now()}`,
+      title: selectedFile?.name || '未命名文档',
+      tags: newTags,
+      date: new Date().toISOString(),
+      status: 'processed'
+    };
+    
+    // 保存文档
+    const existingDocsJSON = localStorage.getItem('documents') || '[]';
+    const existingDocs = JSON.parse(existingDocsJSON);
+    localStorage.setItem('documents', JSON.stringify([...existingDocs, documentData]));
   };
   
   return (

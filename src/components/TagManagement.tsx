@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { mockTags } from '@/lib/mockData';
 import { Tag, Plus, X, Edit, Check } from 'lucide-react';
 
 const TagManagement = () => {
-  const [tags, setTags] = useState([]);
+  const [tags, setTags] = useState(mockTags);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editedTagName, setEditedTagName] = useState('');
@@ -48,6 +48,15 @@ const TagManagement = () => {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
+  
+  useEffect(() => {
+    const storedTags = localStorage.getItem('documentTags');
+    if (storedTags) {
+      setTags(JSON.parse(storedTags));
+    } else {
+      setTags(mockTags);
+    }
+  }, []);
   
   return (
     <section id="tags" className="py-24 relative bg-secondary/30">

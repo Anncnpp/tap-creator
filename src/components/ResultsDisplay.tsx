@@ -5,14 +5,23 @@ import { Search, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 
 const ResultsDisplay = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [documents, setDocuments] = useState(mockDocuments);
+  
+  // 添加 useEffect 从本地存储加载文档
+  useEffect(() => {
+    const storedDocs = localStorage.getItem('documents');
+    if (storedDocs) {
+      setDocuments(JSON.parse(storedDocs));
+    }
+  }, []);
   
   const filteredDocuments = searchQuery
-    ? mockDocuments.filter(doc => 
+    ? documents.filter(doc => 
         doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doc.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doc.tags.some(tag => tag.name.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-    : mockDocuments;
+    : documents;
   
   const getStatusIcon = (status: string) => {
     switch (status) {
