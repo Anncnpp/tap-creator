@@ -1,19 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileUp, X, FilePlus, FileText, Image, FileType } from 'lucide-react';
+import { FileUp, X, FileType } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-// PDF.js导入 - 使用默认导入方式
-import * as pdfjsLib from 'pdfjs-dist';
-import { TextItem } from 'pdfjs-dist/types/src/display/api';
-
-// 启用带有额外类型的worker
-import 'pdfjs-dist/webpack';
 
 const FileUpload = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [processingComplete, setProcessingComplete] = useState(false);
+  const [generatedTags, setGeneratedTags] = useState<string[]>([]);
   
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -42,16 +37,13 @@ const FileUpload = () => {
   };
   
   const handleFile = (file: File) => {
-    // Only accept PDF, images, or text files
-    if (
-      file.type === 'application/pdf' || 
-      file.type.startsWith('image/') || 
-      file.type === 'text/plain'
-    ) {
+    // 只接受文本文件
+    if (file.type === 'text/plain') {
       setSelectedFile(file);
     } else {
-      // Show an error for unsupported file types
-      console.error('不支持的文件类型，请上传 PDF、图片或文本文件');
+      // 显示不支持的文件类型错误
+      console.error('不支持的文件类型，请仅上传文本文件');
+      toast.error('不支持的文件类型，请仅上传文本文件');
     }
   };
   
@@ -68,53 +60,66 @@ const FileUpload = () => {
       console.log("文件类型:", selectedFile?.type);
       console.log("文件大小:", (selectedFile?.size / 1024).toFixed(2), "KB");
       
-      // 只处理文本文件，暂时禁用PDF处理
+      // 处理文本文件
       if (selectedFile) {
-        if (selectedFile.type === 'text/plain') {
-          // 处理文本文件
-          const reader = new FileReader();
-          
-          reader.onload = (event) => {
-            console.log("文本文件内容:", event.target?.result);
-          };
-          reader.readAsText(selectedFile);
-        }
+        let fileContent = '';
+        
+        // 处理文本文件
+        fileContent = await readTextFile(selectedFile);
+        console.log("文本文件内容:", fileContent);
+        
+        // 根据文件内容生成标签
+        const tags = generateTagsFromContent(fileContent);
+        setGeneratedTags(tags);
       }
       
-      // 模拟文件上传和处理
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 处理完成，更新状态
+      setProcessingComplete(true);
+      toast.success("文件处理完成，已生成标签");
       
-      // 添加处理完成后的回调，确保标签生成完成
-      console.log("文件处理完成，准备生成标签");
-      
-      // 提示用户查看处理结果
-      toast.success("文件已上传并处理成功，请查看生成的标签和摘要。", {
-        duration: 3000
-      });
-      
-      // 处理完成后自动跳转到结果区域
-      setTimeout(() => {
-        const resultsSection = document.getElementById('results');
-        if (resultsSection) {
-          resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 500);
     } catch (error) {
-      console.error("文件处理失败:", error);
-      toast.error("文件处理过程中出现错误，请重试。", {
-        duration: 3000
-      });
+      console.error("文件处理错误:", error);
+      toast.error("文件处理失败，请重试");
     } finally {
       setIsUploading(false);
-      setSelectedFile(null);
     }
   };
   
-  const getFileIcon = (file: File) => {
-    if (file.type === 'application/pdf') return <FileText className="w-5 h-5 text-red-500" />;
-    if (file.type.startsWith('image/')) return <Image className="w-5 h-5 text-blue-500" />;
-    if (file.type === 'text/plain') return <FileType className="w-5 h-5 text-green-500" />;
-    return <FilePlus className="w-5 h-5 text-gray-500" />;
+  // 读取文本文件内容
+  const readTextFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        resolve(event.target?.result as string || '');
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+  
+  // 从内容生成标签
+  const generateTagsFromContent = (content: string): string[] => {
+    // 这里应该是实际的NLP或规则处理逻辑
+    // 简单示例：基于文本内容识别关键词
+    const tags: string[] = [];
+    const lowerContent = content.toLowerCase();
+    
+    // 简单的关键词匹配
+    if (lowerContent.includes('财务') || lowerContent.includes('finance')) tags.push('财务');
+    if (lowerContent.includes('报告') || lowerContent.includes('report')) tags.push('报告');
+    if (lowerContent.includes('2023')) tags.push('2023年');
+    if (lowerContent.includes('重要') || lowerContent.includes('important')) tags.push('重要文档');
+    if (lowerContent.includes('计划') || lowerContent.includes('plan')) tags.push('计划');
+    if (lowerContent.includes('项目') || lowerContent.includes('project')) tags.push('项目');
+    if (lowerContent.includes('技术') || lowerContent.includes('tech')) tags.push('技术');
+    if (lowerContent.includes('会议') || lowerContent.includes('meeting')) tags.push('会议');
+    
+    // 如果没有匹配到任何标签，添加一个默认标签
+    if (tags.length === 0) {
+      tags.push('未分类文档');
+    }
+    
+    return tags;
   };
   
   return (
@@ -130,7 +135,7 @@ const FileUpload = () => {
           >
             <h2 className="text-3xl font-medium mb-4">上传文档</h2>
             <p className="text-muted-foreground">
-              拖放或选择要处理的文档。支持 PDF、图片和文本文件
+              拖放或选择要处理的文本文件。仅支持TXT文本文件
             </p>
           </motion.div>
           
@@ -156,7 +161,7 @@ const FileUpload = () => {
                   id="file-input" 
                   type="file" 
                   className="hidden" 
-                  accept=".pdf,image/*,.txt" 
+                  accept=".txt" 
                   onChange={handleFileInput}
                 />
                 
@@ -174,7 +179,7 @@ const FileUpload = () => {
                       {isDragging ? '放置文件以上传' : '拖放文件到这里或点击选择文件'}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      支持 PDF、图片或文本文件
+                      仅支持TXT文本文件
                     </p>
                   </div>
                 </div>
@@ -193,7 +198,7 @@ const FileUpload = () => {
                 </div>
                 
                 <div className="flex items-center p-4 bg-secondary rounded-lg mb-6">
-                  {getFileIcon(selectedFile)}
+                  <FileType className="w-5 h-5 text-green-500" />
                   <div className="ml-3">
                     <div className="font-medium truncate max-w-xs">{selectedFile.name}</div>
                     <div className="text-xs text-muted-foreground">
@@ -227,6 +232,51 @@ const FileUpload = () => {
               </div>
             )}
           </motion.div>
+          
+          {/* 处理完成后显示结果 */}
+          {processingComplete && (
+            <div className="mt-8">
+              <div className="glass-card p-6">
+                <h3 className="text-lg font-medium mb-4">文件处理完成</h3>
+                <p className="mb-4">系统已自动生成以下标签：</p>
+                
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {generatedTags.map((tag, index) => (
+                    <div
+                      key={index}
+                      className="bg-secondary text-secondary-foreground py-1 px-2 rounded-full text-xs"
+                    >
+                      {tag}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => {
+                      // 重置状态，允许上传新文件
+                      setSelectedFile(null);
+                      setProcessingComplete(false);
+                      setGeneratedTags([]);
+                    }}
+                    className="px-4 py-1.5 rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    上传新文件
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // 这里可以添加跳转到标签管理页面的逻辑
+                      document.getElementById('tags')?.scrollIntoView({behavior: 'smooth'});
+                    }}
+                    className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    管理标签
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>
