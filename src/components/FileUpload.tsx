@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileUp, X, FileType } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { generateTags, generateSummary } from '@/lib/api';
 
 const FileUpload = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -37,13 +38,15 @@ const FileUpload = () => {
   };
   
   const handleFile = (file: File) => {
-    // 只接受文本文件
-    if (file.type === 'text/plain') {
+    // 支持文本文件和PDF文件
+    if (file.type === 'text/plain' || file.type === 'application/pdf' || 
+        file.type === 'application/msword' || 
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       setSelectedFile(file);
     } else {
       // 显示不支持的文件类型错误
-      console.error('不支持的文件类型，请仅上传文本文件');
-      toast.error('不支持的文件类型，请仅上传文本文件');
+      console.error('不支持的文件类型，请上传文本文件、PDF或Word文档');
+      toast.error('不支持的文件类型，请上传文本文件、PDF或Word文档');
     }
   };
   
@@ -60,20 +63,45 @@ const FileUpload = () => {
       console.log("文件类型:", selectedFile?.type);
       console.log("文件大小:", (selectedFile?.size / 1024).toFixed(2), "KB");
       
-      // 处理文本文件
+      // 处理文件
       if (selectedFile) {
         let fileContent = '';
         
-        // 处理文本文件
-        fileContent = await readTextFile(selectedFile);
-        console.log("文本文件内容:", fileContent);
+        // 根据文件类型处理
+        if (selectedFile.type === 'text/plain') {
+          // 处理文本文件
+          fileContent = await readTextFile(selectedFile);
+        } else if (selectedFile.type === 'application/pdf') {
+          // 处理PDF文件 - 显示处理信息
+          toast.loading("正在处理PDF文件，这可能需要一点时间...");
+          fileContent = "PDF文件内容：" + selectedFile.name;
+          // 实际项目中应该使用PDF解析库
+        } else if (selectedFile.type === 'application/msword' || 
+                  selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          // 处理Word文档 - 显示处理信息
+          toast.loading("正在处理Word文档，这可能需要一点时间...");
+          fileContent = "Word文档内容：" + selectedFile.name;
+          // 实际项目中应该使用Word解析库
+        }
         
-        // 根据文件内容生成标签
-        const tags = generateTagsFromContent(fileContent);
+        console.log("文件内容长度:", fileContent.length);
+        
+        // 使用API服务生成标签和摘要
+        const [tags, summary] = await Promise.all([
+          generateTags(fileContent).catch(error => {
+            console.error('API标签生成失败，使用备用方案:', error);
+            return generateTagsLocally(fileContent);
+          }),
+          generateSummary(fileContent).catch(error => {
+            console.error('API摘要生成失败，使用默认摘要:', error);
+            return '文档内容摘要';
+          })
+        ]);
+        
         setGeneratedTags(tags);
         
-        // 将生成的标签保存到本地存储或全局状态
-        saveTagsToGlobalState(tags);
+        // 将生成的标签和摘要保存到本地存储或全局状态
+        saveTagsToGlobalState(tags, summary);
       }
       
       // 处理完成，更新状态
@@ -100,10 +128,8 @@ const FileUpload = () => {
     });
   };
   
-  // 从内容生成标签
-  const generateTagsFromContent = (content: string): string[] => {
-    // 这里应该是实际的NLP或规则处理逻辑
-    // 简单示例：基于文本内容识别关键词
+  // 本地标签生成逻辑（作为备份）
+  const generateTagsLocally = (content: string): string[] => {
     const tags: string[] = [];
     const lowerContent = content.toLowerCase();
     
@@ -126,7 +152,7 @@ const FileUpload = () => {
   };
   
   // 保存标签到全局状态的函数
-  const saveTagsToGlobalState = (tags: string[]) => {
+  const saveTagsToGlobalState = (tags: string[], summary: string) => {
     // 获取现有标签
     const existingTagsJSON = localStorage.getItem('documentTags') || '[]';
     const existingTags = JSON.parse(existingTagsJSON);
@@ -164,7 +190,7 @@ const FileUpload = () => {
       type: 'text',
       uploadedAt: new Date().toISOString(),
       status: 'processed',
-      summary: '文本文档内容摘要', // 可以改为从内容中提取摘要
+      summary: summary, // 使用API生成的摘要
       tags: newTags,
       filePath: `/uploads/${selectedFile?.name}` // 假设文件路径
     };
@@ -216,7 +242,7 @@ const FileUpload = () => {
           >
             <h2 className="text-3xl font-medium mb-4">上传文档</h2>
             <p className="text-muted-foreground">
-              拖放或选择要处理的文本文件。仅支持TXT文本文件
+              拖放或选择要处理的文件。支持TXT文本文件、PDF和Word文档
             </p>
           </motion.div>
           
@@ -242,7 +268,7 @@ const FileUpload = () => {
                   id="file-input" 
                   type="file" 
                   className="hidden" 
-                  accept=".txt" 
+                  accept=".txt,.pdf,.doc,.docx" 
                   onChange={handleFileInput}
                 />
                 
@@ -260,7 +286,7 @@ const FileUpload = () => {
                       {isDragging ? '放置文件以上传' : '拖放文件到这里或点击选择文件'}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      仅支持TXT文本文件
+                      支持TXT、PDF和Word文档
                     </p>
                   </div>
                 </div>

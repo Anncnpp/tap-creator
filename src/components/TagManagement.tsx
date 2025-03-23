@@ -14,6 +14,11 @@ const TagManagement = () => {
     { id: 'theme', name: '主题' },
     { id: 'keyword', name: '关键词' },
     { id: 'entity', name: '实体' },
+    { id: 'person', name: '人物' },
+    { id: 'organization', name: '组织' },
+    { id: 'location', name: '地点' },
+    { id: 'time', name: '时间' },
+    { id: 'event', name: '事件' },
   ];
   
   const filteredTags = selectedCategory && selectedCategory !== 'all'
@@ -64,6 +69,11 @@ const TagManagement = () => {
       case 'theme': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
       case 'keyword': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
       case 'entity': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+      case 'person': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      case 'organization': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
+      case 'location': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+      case 'time': return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300';
+      case 'event': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
