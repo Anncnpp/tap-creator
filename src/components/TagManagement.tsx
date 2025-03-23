@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { mockTags } from '@/lib/mockData';
 import { Tag, Plus, X, Edit, Check } from 'lucide-react';
 
 const TagManagement = () => {
-  const [tags, setTags] = useState(mockTags);
+  const [tags, setTags] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editedTagName, setEditedTagName] = useState('');
