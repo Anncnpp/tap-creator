@@ -149,35 +149,6 @@ const TagManagement = () => {
                 添加标签
               </button>
             </div>
-            
-            <div className="bg-secondary/50 rounded-lg p-4">
-              <div className="text-sm text-muted-foreground mb-4">
-                标签置信度分布
-              </div>
-              <div className="relative h-12 mb-2">
-                {filteredTags.map((tag, index) => (
-                  <motion.div
-                    key={tag.id}
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${tag.confidence * 100}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, delay: 0.3 + (index * 0.05) }}
-                    className={`absolute h-3 rounded-full ${
-                      index % 2 === 0 ? 'top-0' : 'bottom-0'
-                    }`}
-                    style={{
-                      left: 0,
-                      backgroundColor: `hsl(${210 + (index * 15)} 100% 50% / ${0.3 + (tag.confidence * 0.7)})`,
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>0%</span>
-                <span>50%</span>
-                <span>100%</span>
-              </div>
-            </div>
           </motion.div>
         </div>
       </div>
