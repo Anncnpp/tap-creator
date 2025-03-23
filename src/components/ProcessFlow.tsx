@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { processingSteps } from '@/lib/mockData';
@@ -6,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 
 const ProcessFlow = () => {
   return (
-    <section id="process" className="py-24 relative">
+    <section id="process" className="py-24 relative hidden">
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <motion.h2 

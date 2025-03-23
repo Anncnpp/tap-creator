@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileUp, X, FilePlus, FileText, Image, FileType } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const FileUpload = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -52,17 +52,42 @@ const FileUpload = () => {
     setSelectedFile(null);
   };
   
-  const handleUpload = () => {
-    if (selectedFile) {
-      setIsUploading(true);
+  const handleUpload = async () => {
+    setIsUploading(true);
+    
+    try {
+      // 添加日志以跟踪文件上传状态
+      console.log("开始处理文件:", selectedFile?.name);
       
-      // Simulate upload process
+      // 模拟文件上传和处理
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 添加处理完成后的回调，确保标签生成完成
+      console.log("文件处理完成，准备生成标签");
+      
+      // 提示用户查看处理结果
+      toast({
+        title: "处理完成",
+        description: "文件已上传并处理成功，请查看生成的标签和摘要。",
+      });
+      
+      // 处理完成后自动跳转到结果区域
       setTimeout(() => {
-        setIsUploading(false);
-        setSelectedFile(null);
-        // In a real application, here you would handle the successful upload
-        console.log(`文件 "${selectedFile.name}" 上传成功!`);
-      }, 2000);
+        const resultsSection = document.getElementById('results');
+        if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    } catch (error) {
+      console.error("文件处理失败:", error);
+      toast({
+        title: "处理失败",
+        description: "文件处理过程中出现错误，请重试。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setSelectedFile(null);
     }
   };
   

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { mockDocuments } from '@/lib/mockData';
 import { Search, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
@@ -32,6 +31,17 @@ const ResultsDisplay = () => {
       default: return status;
     }
   };
+  
+  useEffect(() => {
+    // 定期检查文档处理状态
+    const checkProcessingStatus = () => {
+      // 这里应该是调用后端API检查状态的逻辑
+      console.log("检查文档处理状态...");
+    };
+    
+    const interval = setInterval(checkProcessingStatus, 5000);
+    return () => clearInterval(interval);
+  }, []);
   
   return (
     <section id="results" className="py-24 relative">

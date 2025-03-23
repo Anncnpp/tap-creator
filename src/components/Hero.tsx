@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FileUp, ChevronDown } from 'lucide-react';
@@ -63,28 +62,12 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-          {/* Simplified workflow visualization */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            {['用户层', '应用层', 'AI处理层', '数据层'].map((item, index) => (
-              <motion.div
-                key={item}
-                className="flex flex-col items-center p-4 rounded-xl bg-secondary/50"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.5 + (index * 0.1) }}
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-2">
-                  {index + 1}
-                </div>
-                <h3 className="text-sm font-medium">{item}</h3>
-              </motion.div>
-            ))}
+          <div className="text-center">
+            <h3 className="text-lg font-medium mb-4">智能处理系统</h3>
+            <p className="text-muted-foreground">
+              我们的平台提供从文档上传到智能标签生成的完整解决方案，无需显示技术细节
+            </p>
           </div>
-          
-          {/* Connecting lines */}
-          <svg className="absolute top-1/2 left-0 w-full h-6 -translate-y-1/2 hidden md:block z-0" xmlns="http://www.w3.org/2000/svg">
-            <line x1="12.5%" y1="50%" x2="87.5%" y2="50%" stroke="hsl(var(--primary))" strokeWidth="2" strokeDasharray="4" />
-          </svg>
         </motion.div>
       </div>
       
