@@ -47,13 +47,6 @@ const Hero = () => {
             <FileUp className="w-5 h-5" />
             <span>上传文档</span>
           </a>
-          
-          <a 
-            href="#process" 
-            className="inline-flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-full hover:bg-secondary/80 transition-all duration-300"
-          >
-            <span>了解工作流程</span>
-          </a>
         </motion.div>
         
         <motion.div

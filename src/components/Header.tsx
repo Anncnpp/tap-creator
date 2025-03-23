@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -19,7 +18,6 @@ const Header = () => {
 
   const navItems = [
     { name: '文档', icon: <FileText className="w-4 h-4 mr-1" />, href: '#upload' },
-    { name: '处理流程', icon: <Database className="w-4 h-4 mr-1" />, href: '#process' },
     { name: '标签管理', icon: <Tag className="w-4 h-4 mr-1" />, href: '#tags' },
     { name: '搜索结果', icon: <Search className="w-4 h-4 mr-1" />, href: '#results' },
   ];

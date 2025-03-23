@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileUp, X, FilePlus, FileText, Image, FileType } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+
+// PDF.js导入 - 使用默认导入方式
+import * as pdfjsLib from 'pdfjs-dist';
+import { TextItem } from 'pdfjs-dist/types/src/display/api';
+
+// 启用带有额外类型的worker
+import 'pdfjs-dist/webpack';
 
 const FileUpload = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -58,6 +65,21 @@ const FileUpload = () => {
     try {
       // 添加日志以跟踪文件上传状态
       console.log("开始处理文件:", selectedFile?.name);
+      console.log("文件类型:", selectedFile?.type);
+      console.log("文件大小:", (selectedFile?.size / 1024).toFixed(2), "KB");
+      
+      // 只处理文本文件，暂时禁用PDF处理
+      if (selectedFile) {
+        if (selectedFile.type === 'text/plain') {
+          // 处理文本文件
+          const reader = new FileReader();
+          
+          reader.onload = (event) => {
+            console.log("文本文件内容:", event.target?.result);
+          };
+          reader.readAsText(selectedFile);
+        }
+      }
       
       // 模拟文件上传和处理
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -66,9 +88,8 @@ const FileUpload = () => {
       console.log("文件处理完成，准备生成标签");
       
       // 提示用户查看处理结果
-      toast({
-        title: "处理完成",
-        description: "文件已上传并处理成功，请查看生成的标签和摘要。",
+      toast.success("文件已上传并处理成功，请查看生成的标签和摘要。", {
+        duration: 3000
       });
       
       // 处理完成后自动跳转到结果区域
@@ -80,10 +101,8 @@ const FileUpload = () => {
       }, 500);
     } catch (error) {
       console.error("文件处理失败:", error);
-      toast({
-        title: "处理失败",
-        description: "文件处理过程中出现错误，请重试。",
-        variant: "destructive",
+      toast.error("文件处理过程中出现错误，请重试。", {
+        duration: 3000
       });
     } finally {
       setIsUploading(false);
